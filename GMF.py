@@ -61,10 +61,10 @@ def get_model(num_users, num_items, latent_dim, regs=[0,0]):
     user_input = Input(shape=(1,), dtype='int32', name = 'user_input')
     item_input = Input(shape=(1,), dtype='int32', name = 'item_input')
 
-    MF_Embedding_User = Embedding(input_dim = num_users, output_dim = latent_dim, 
+    MF_Embedding_User = Embedding(input_dim = num_users, output_dim = latent_dim, name = 'user_embedding',
                                   init = init_normal, W_regularizer = l2(regs[0]), input_length=1)
-    MF_Embedding_Item = Embedding(input_dim = num_items, output_dim = latent_dim, 
-                                  init = init_normal, W_regularizer = l2(regs[1]), input_length=1)   
+    MF_Embedding_Item = Embedding(input_dim = num_items, output_dim = latent_dim, name = 'item_embedding',
+                                  init = init_normal, W_regularizer = l2(regs[1]), input_length=1)  
     
     # Crucial to flatten an embedding vector!
     user_latent = Flatten()(MF_Embedding_User(user_input))
@@ -79,8 +79,8 @@ def get_model(num_users, num_items, latent_dim, regs=[0,0]):
     #prediction = Lambda(lambda x: K.sigmoid(K.sum(x)), output_shape=(1,))(predict_vector)
     prediction = Dense(1, activation='sigmoid', init='lecun_uniform', name = 'prediction')(predict_vector)
     
-    model = Model(input=[user_input, item_input], 
-                output=prediction)
+    model = Model(inputs=[user_input, item_input], 
+                outputs=prediction)
 
     return model
 
@@ -96,7 +96,7 @@ def get_train_instances(train, num_negatives):
         for t in range(num_negatives):
             j = np.random.randint(num_items)
             # while train.has_key((u, j)):
-            while (u, j) in train:
+            while (u, j) in train.keys():
                 j = np.random.randint(num_items)
             user_input.append(u)
             item_input.append(j)
@@ -157,7 +157,7 @@ if __name__ == '__main__':
         # Training
         hist = model.fit([np.array(user_input), np.array(item_input)], #input
                          np.array(labels), # labels 
-                         batch_size=batch_size, nb_epoch=1, verbose=0, shuffle=True)
+                         batch_size=batch_size, epochs=1, verbose=0, shuffle=True)
         t2 = time()
         
         # Evaluation
